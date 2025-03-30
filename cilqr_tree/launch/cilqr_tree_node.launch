@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+
+   <!-- <node name="rviz" pkg="rviz" type="rviz" output="screen"  args="-d $(find cilqr_tree_new)/config/default.rviz">  
+   </node> -->
+ 
+  <node pkg="cilqr_tree" type="cilqr_tree_node" name="cilqr_tree_node" output="screen">
+      <rosparam file="$(find cilqr_tree)/config/cilqr_tree.yaml"/>
+  </node>
+
+</launch>

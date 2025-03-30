@@ -1,0 +1,11 @@
+vehicle_msgs/State ego_state
+vehicle_msgs/Scenario[] scenarios
+int64 num_surrounding_vehicle
+---
+float64 acc
+float64 steer
+bool success
+float64 computation_time
+int64 num_total_iter
+vehicle_msgs/State[] ego_trajs
+float64 alpha

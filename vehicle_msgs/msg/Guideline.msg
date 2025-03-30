@@ -1,0 +1,1 @@
+vehicle_msgs/Point2d[] waypoints

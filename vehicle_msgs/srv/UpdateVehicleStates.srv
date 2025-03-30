@@ -1,0 +1,5 @@
+vehicle_msgs/State[] multi_vehicle_states
+vehicle_msgs/Guideline[] guidelines
+float64[] num_guideline_list
+---
+bool success

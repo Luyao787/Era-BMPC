@@ -1,0 +1,4 @@
+*.json
+*.pyc
+cilqr_tree/data/
+simple_simulation/data/

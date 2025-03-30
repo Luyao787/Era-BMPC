@@ -1,0 +1,17 @@
+num_sim_steps: 1000
+# num_sim_steps: 1
+sim_dt: 0.01
+
+plan_dt: 0.1
+prediction_horizon: 50
+
+Kp_lon: 1.0
+acc_max: 3.0
+steer_max: 0.63
+K_dd: 1.2
+
+lane_width: 3.6
+lane_width_scale: 1.0
+
+motion_planner_type: 0.0
+# motion_planner_type: 1.0

@@ -1,0 +1,4 @@
+int64 sim_id
+int64 planner_type
+---
+bool success

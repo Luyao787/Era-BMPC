@@ -1,0 +1,4 @@
+vehicle_msgs/Point2d waypoint
+float64 lane_width_left
+float64 lane_width_right
+vehicle_msgs/Point2d norm_vec

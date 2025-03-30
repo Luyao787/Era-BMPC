@@ -1,0 +1,4 @@
+---
+vehicle_msgs/State[] ego_state_traj
+vehicle_msgs/DynObs[] predictions
+float64[] scenario_probabilities 

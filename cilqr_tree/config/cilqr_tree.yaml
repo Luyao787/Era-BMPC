@@ -1,0 +1,70 @@
+L : 3.0
+dt: 0.1
+
+N: 50
+N_sh: 5
+
+# alpha: 0.8
+alpha: 0.6 
+# alpha: 0.1
+
+num_branch: 2 
+# num_branch: 4
+
+num_state: 4
+num_aug_state: 6
+num_input: 2
+
+weight_state: [7.5, 7.5, 0., 1.0] # work
+
+weight_input: [10., 800.]
+weight_comfort: [2000., 1500.]
+
+# weight_safety: 0.
+# weight_safety: 50. 
+weight_safety: 100.  
+
+state_max: [ 1.0e+5,  1.0e+5,  1.0e+5, 10.]
+state_min: [-1.0e+5, -1.0e+5, -1.0e+5,  0.]
+input_max: [ 5.,  0.62]
+input_min: [-5., -0.62] 
+
+safety_margin: 0.0
+r_saf: 5.0
+
+rho_init: 1.
+# rho_max: 1.0e+8
+rho_max: 1.0e+6
+rho_scaling: 10.
+
+
+MAX_LS_ITER: 20
+
+# MAX_ITER: 200
+MAX_ITER: 100
+# MAX_ITER: 50
+# MAX_ITER: 0
+
+MAX_OUTER_ITER: 20
+# MAX_OUTER_ITER: 1
+
+ls_accept_ratio: 0.6
+ls_decay_rate: 0.5
+
+# regu_init: 100.0
+regu_init: 1.0e-3
+regu_max: 1.0e+5
+regu_min: 1.0e-6
+
+# cost_redu_tol: 1.0e-3
+cost_redu_tol: 1.0e-4
+# cost_redu_tol: 1.0e-5
+# cost_redu_tol: 1.0e-8
+grad_tol: 1.0e-5
+
+constr_vio_tol: 1.0e-4
+
+
+beta: 500.
+gamma: 0.008 
+
