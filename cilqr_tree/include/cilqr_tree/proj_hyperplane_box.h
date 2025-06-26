@@ -4,6 +4,10 @@
 
 namespace proj
 {
+    /**
+     * Projects a point onto a box defined by lower and upper bounds.
+     */
+
     template <int d>
     inline void proj_box(
         Eigen::Matrix<double, d, 1>& x, 
@@ -19,6 +23,10 @@ namespace proj
         }
     }
     
+    /**
+     * Evaluates the function f(mu) = c^T * Proj_{Box_[lb, ub]}(x - mu * c) - 1.
+     */
+
     template <int d>
     inline double fun(const double mu, 
                       const Eigen::Matrix<double, d, 1>& x, 
@@ -31,6 +39,21 @@ namespace proj
         proj_box(y, lb, ub);
         return c.transpose() * y - 1;
     }
+
+    /**
+     * Bisection method to find the root of the function f(mu).
+     * 
+     * @tparam d Dimension of the vector.
+     * @param a Lower bound of the interval.
+     * @param b Upper bound of the interval.
+     * @param tol Tolerance for convergence.
+     * @param x The vector to be projected.
+     * @param c The coefficient vector defining the hyperplane: c^T * x = 1.
+     * @param lb The lower bounds of the box.
+     * @param ub The upper bounds of the box.
+     * 
+     * @return The value of mu that satisfies f(mu) = 0 within the specified tolerance.
+     */
 
     template <int d>
     inline double bisection(double a, 
@@ -69,6 +92,16 @@ namespace proj
         return m;
     }
     
+    /**
+     * Projects a point onto the intersection of a hyperplane and a box.
+     * 
+     * @tparam d Dimension of the vector.
+     * @param x The vector to be projected.
+     * @param c The coefficient vector defining the hyperplane: c^T * x = 1.
+     * @param lb The lower bounds of the box.
+     * @param ub The upper bounds of the box.
+     */
+
     template <int d>
     inline void proj_hyperplane_box(
         Eigen::Matrix<double, d, 1>& x, 
@@ -94,4 +127,4 @@ namespace proj
         x = y;
     }
 
-} // namespace proj
+}   // namespace proj
