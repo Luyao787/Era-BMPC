@@ -2,19 +2,17 @@ import rospy
 import os
 import rospkg
 import numpy as np
-import math
 import itertools
 from vehicle_msgs.msg import State, Input, Point2d, Scenario, DynObs, DynObsPt, LocalGuidelinePoint
 from vehicle_msgs.srv import GetAction, GetActionRequest, UpdateVehicleStates, UpdateVehicleStatesRequest, ResetMP, ResetMPRequest
 from utils.visualization import *
 from utils.guideline import Guideline
 from utils.vehicle import Vehicle  
-from copy import deepcopy
 from motion_control.motion_control import MotionControl
 from behavior_planner.behavior_planner import BehaviorPlanner
-from random import uniform, seed
-import matplotlib.pyplot as plt
-import json
+import yaml
+import argparse
+
 
 class SimpleSimulationNode:
     def __init__(
@@ -247,56 +245,105 @@ class SimpleSimulationNode:
             
         rospy.spin()
 
-         
+def load_example_config(name, config_dir):
+    config_path = os.path.join(config_dir, f"{name}.yaml")
+    
+    if not os.path.exists(config_path):
+        rospy.logerr(f"Scenario config file not found: {config_path}")
+        return None
+    
+    with open(config_path, 'r') as file:
+        config = yaml.safe_load(file)
+    
+    config['centerline_waypoints'] = [np.array(waypoints) for waypoints in config['centerline_waypoints']]
+    config['multi_vehicle_states'] = [np.array(state) for state in config['multi_vehicle_states']]
+
+    return config
+    
+    
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--scenario')
+    args, unknown = parser.parse_known_args()
+      
     rospy.init_node("simple_simulation_node")
     sim_config = rospy.get_param("simple_simulation")
     
     print(f"sim_config:\n {sim_config}")
     
     root_dir = os.path.dirname(rospkg.RosPack().get_path('simple_simulation'))
-
-    # hard-coded lanes
-    centerline_waypoints = [
-        np.array([
-            [0., -100.], 
-            [0.,  0.], 
-            [0.,  500.]]),
-        np.array([
-            [-100., 0.], 
-            [ 0.,   0.], 
-            [500.,  0.]]),
-    ]
-    centerlines = [
-        Guideline(centerline_waypoints[0]),
-        Guideline(centerline_waypoints[1]),
-    ]
     
+    # Load example configuration
+    config_dir = os.path.join(root_dir, "simple_simulation", "config")
+    example_config = load_example_config(args.scenario, config_dir)
     
-    num_vehicles = 2
-    multi_vehicle_states = [
-        np.array([1., -50., np.pi / 2, 5.]),
-        np.array([-35, 1.5, 0., 5.]),
-    ]
-    vehicle_sizes = [
-        [4.0, 2.0, 3.0],
-        [4.0, 2.0, 3.0],
-    ]
+    if example_config is None:
+        rospy.logerr("Failed to load example configuration!")
+        exit(1)
+    
+    print(f"Loaded example: {example_config['example_name']}")
+    
+    centerline_waypoints = example_config['centerline_waypoints']
+    centerlines = [Guideline(waypoints) for waypoints in centerline_waypoints]
+    
+    num_vehicles = example_config['num_vehicles']
+    multi_vehicle_states = example_config['multi_vehicle_states']
+    vehicle_sizes = example_config['vehicle_sizes']
+    
     sv_predicted_decision_set = {
-        "decision_switch_time": 1.0,
-        "decisions": 
-        [
-            # Stage 1
-            [
-                [{"speed": 5.0, "lane_id": 1}, {"speed": 1.0, "lane_id": 1}],   # SV1
-                # [],   SV2 
-            ],
-            # Stage 2
-            [
-                [{"speed": 5.0, "lane_id": 1}, {"speed": 1.0, "lane_id": 1}],  
-            ]
+        "decision_switch_time": example_config['sv_predicted_decision_set']['decision_switch_time'],
+        "decisions": [
+            list(example_config['sv_predicted_decision_set']['decisions']['stage_1']),
+            list(example_config['sv_predicted_decision_set']['decisions']['stage_2'])
         ]
     }
+    sv_decisions = example_config['sv_decisions']
+
+    # # hard-coded lanes
+    # centerline_waypoints = [
+    #     np.array([
+    #         [0., -100.], 
+    #         [0.,  0.], 
+    #         [0.,  500.]]),
+    #     np.array([
+    #         [-100., 0.], 
+    #         [ 0.,   0.], 
+    #         [500.,  0.]]),
+    # ]
+    # centerlines = [
+    #     Guideline(centerline_waypoints[0]),
+    #     Guideline(centerline_waypoints[1]),
+    # ]
+    
+    
+    # num_vehicles = 2
+    # multi_vehicle_states = [
+    #     np.array([1., -50., np.pi / 2, 5.]),
+    #     np.array([-35, 1.5, 0., 5.]),
+    # ]
+    # vehicle_sizes = [
+    #     [4.0, 2.0, 3.0],
+    #     [4.0, 2.0, 3.0],
+    # ]
+    # sv_predicted_decision_set = {
+    #     "decision_switch_time": 1.0,
+    #     "decisions": 
+    #     [
+    #         # Stage 1
+    #         [
+    #             [{"speed": 5.0, "lane_id": 1}, {"speed": 1.0, "lane_id": 1}],   # SV1
+    #             # [],   SV2 
+    #         ],
+    #         # Stage 2
+    #         [
+    #             [{"speed": 5.0, "lane_id": 1}, {"speed": 1.0, "lane_id": 1}],  
+    #         ]
+    #     ]
+    # }
+    # sv_decisions = [
+    #     [5., 5., 1.]    # v_des_stage1, v_des_stage2, switch_time
+    # ]
+    
     sim_node = SimpleSimulationNode(
         centerlines,
         num_vehicles,
@@ -305,10 +352,5 @@ if __name__ == "__main__":
         sv_predicted_decision_set,
         sim_config
     )
-    
-    sv_decisions = [
-        [5., 5., 1.]    # v_des_stage1, v_des_stage2, switch_time
-    ]
-    
     sim_node.run(sv_decisions)    
     

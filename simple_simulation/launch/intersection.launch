@@ -1,6 +1,10 @@
 <launch>
     <node name="rviz" pkg="rviz" type="rviz" args="-d $(find simple_simulation)/rviz/intersection.rviz"/>
-    <node name="simple_simulation" pkg="simple_simulation" type="simple_simulation_node.py" output="screen">
+    <node name="simple_simulation" 
+          pkg="simple_simulation" 
+          type="simple_simulation_node.py" 
+          output="screen"
+          args="--scenario $(arg scenario)">
         <rosparam file="$(find simple_simulation)/config/sim_config.yaml"/>
     </node>
 </launch>
