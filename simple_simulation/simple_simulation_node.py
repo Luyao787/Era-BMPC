@@ -22,6 +22,7 @@ class SimpleSimulationNode:
         vehicle_sizes,
         multi_vehicle_states,
         sv_predicted_decision_set,
+        ego_lon_decision_set,
         config
     ):
         self._centerlines_vis_pub = rospy.Publisher("centerlines", MarkerArray, queue_size=1)
@@ -37,7 +38,7 @@ class SimpleSimulationNode:
         self._config = config
         
         self._vehicles = []
-        self._behavior_planner = BehaviorPlanner(self._centerlines_waypoints[0])
+        self._behavior_planner = BehaviorPlanner(ego_lon_decision_set, self._centerlines_waypoints)
 
     def _timer_callback(self, event):
         draw_centerlines(self._centerlines_waypoints, self._centerlines_vis_pub)
@@ -76,7 +77,7 @@ class SimpleSimulationNode:
                 )
                 self._motion_controllers[i] = motion_control
                 
-    def _get_local_guideline(self, ref_state_traj):
+    def _get_local_guideline(self, ref_state_traj, target_lane_id):
         
         planning_horizon = self._config["prediction_horizon"]
         lane_width = self._config["lane_width"]
@@ -86,11 +87,10 @@ class SimpleSimulationNode:
         idx = 1
         local_guideline = []
         for k in range(planning_horizon + 1):
-            s, _ = self._centerlines[0].project(ref_state_traj[k, :2])
-            point, idx = self._centerlines[0].get_point(s, idx)
-            local_guideline.append(LocalGuidelinePoint())
+            s, _ = self._centerlines[target_lane_id].project(ref_state_traj[k, :2])
+            point, idx = self._centerlines[target_lane_id].get_point(s, idx)
+            local_guideline.append(LocalGuidelinePoint())            
             local_guideline[k].waypoint = Point2d(x=point[0], y=point[1])
-            
             local_guideline[k].lane_width_left = abs(lane_width_left) * scale 
             local_guideline[k].lane_width_right = abs(lane_width_right) * scale
             
@@ -156,14 +156,13 @@ class SimpleSimulationNode:
             for input in best_input_traj:
                 scenario.reference_input_sequence.append(Input(acc=input[0], steer=input[1]))
                 
-            vel_des = self._behavior_planner.get_action(best_action_id)            
-            local_guideline = self._get_local_guideline(best_state_traj)
+            lon_speed_des, target_lane_id = self._behavior_planner.get_action(best_action_id)            
+            local_guideline = self._get_local_guideline(best_state_traj, target_lane_id)            
             scenario.local_guideline = local_guideline
             
             self._scenarios.append(scenario)  
 
-            print(f"desired_speed: {vel_des}")
-            print(f"best_action_id: {best_action_id}")
+            print(f"desired longitudinal speed: {lon_speed_des}, target lane id: {target_lane_id}")
     
     def _get_ev_action(self):             
         rospy.wait_for_service("/motion_planner/get_ev_action", timeout=1.)
@@ -244,6 +243,7 @@ class SimpleSimulationNode:
             self.run_one_simulation(sv_decisions)
             
         rospy.spin()
+        
 
 def load_example_config(name, config_dir):
     config_path = os.path.join(config_dir, f"{name}.yaml")
@@ -298,7 +298,9 @@ if __name__ == "__main__":
         ]
     }
     sv_decisions = example_config['sv_decisions']
-
+    
+    ego_lon_decision_set = example_config['ego_lon_decision_set']
+        
     # # hard-coded lanes
     # centerline_waypoints = [
     #     np.array([
@@ -350,6 +352,7 @@ if __name__ == "__main__":
         vehicle_sizes,
         multi_vehicle_states,
         sv_predicted_decision_set,
+        ego_lon_decision_set,
         sim_config
     )
     sim_node.run(sv_decisions)    

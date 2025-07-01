@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.linalg as LA
 
-class PurePursuit():
+class PurePursuit:
     def __init__(self, wheel_base=3.0, K_dd=0.4,steering_max=np.pi/6):
         self.wheel_base = wheel_base
         self.K_dd = K_dd
@@ -13,16 +13,16 @@ class PurePursuit():
         return (LA.inv(rot) @ (waypoints - pos).T).T
     
     def compute_steering_angle(self, state_obsv, polylines, debug=False):
-        look_ahead_distance = self.K_dd * state_obsv[3]
+        look_ahead_distance = self.K_dd * state_obsv[3]        
+            
         transformed_waypoints = self.transform(state_obsv[0:2], state_obsv[2], polylines)
         target_point = self.get_target_point(look_ahead_distance, transformed_waypoints)
-
+    
         if target_point is None:
             return 0.   # steering angle
         alpha = np.arctan(-target_point[0] / target_point[1])
         # Change the steer output with the lateral controller.        
         steer = np.arctan((2 * self.wheel_base * np.sin(alpha)) / look_ahead_distance)
-
         steer = max(-self.steering_max, min(steer, self.steering_max))
         
         if debug:

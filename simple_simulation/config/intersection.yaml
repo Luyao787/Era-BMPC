@@ -23,3 +23,5 @@ sv_predicted_decision_set:
 
 sv_decisions:
   - [5.0, 5.0, 1.0]  # v_des_stage1, v_des_stage2, switch_time
+
+ego_lon_decision_set: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]

@@ -1,4 +1,4 @@
-num_sim_steps: 1000
+num_sim_steps: 2500
 # num_sim_steps: 1
 sim_dt: 0.01
 
@@ -11,7 +11,9 @@ steer_max: 0.63
 K_dd: 1.2
 
 lane_width: 3.6
-lane_width_scale: 1.0
+# lane_width_scale: 1.2
+lane_width_scale: 100
 
+# 0: Branch MPC 1: Risk-Aware MPC
 motion_planner_type: 0.0
 # motion_planner_type: 1.0

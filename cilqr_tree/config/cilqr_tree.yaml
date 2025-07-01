@@ -30,7 +30,8 @@ input_max: [ 5.,  0.62]
 input_min: [-5., -0.62] 
 
 safety_margin: 0.0
-r_saf: 5.0
+# r_saf: 5.0
+r_saf: 2.5
 
 rho_init: 1.
 # rho_max: 1.0e+8
