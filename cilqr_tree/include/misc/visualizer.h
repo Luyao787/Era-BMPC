@@ -69,8 +69,8 @@ public:
                     obstacle_marker.header.frame_id = "map";
                     obstacle_marker.action = visualization_msgs::Marker::ADD;
                     obstacle_marker.ns = "obstacles";
-                    obstacle_marker.color.r = 0.0;
-                    obstacle_marker.color.g = 1.0;
+                    obstacle_marker.color.r = 1.0;
+                    obstacle_marker.color.g = 0.0;
                     obstacle_marker.color.b = 0.0;
                     obstacle_marker.color.a = 0.01;
                     obstacle_marker.scale.x = vehicle_length;
