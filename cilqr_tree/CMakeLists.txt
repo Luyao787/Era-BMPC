@@ -1,26 +1,12 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(cilqr_tree)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++17) # static constexpr
 
+set(CMAKE_CXX_STANDARD 17) # # static constexpr
 set(CMAKE_BUILD_TYPE "Release")
+set(CMAKE_CXX_FLAGS_RELEASE "-O2 -Wall -Wextra -Wpedantic -fPIC -march=native -fopenmp")
 
-# set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -fPIC")
-# set(CMAKE_BUILD_TYPE "Debug")
-# set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -fPIC")
-# add_compile_options(-Wall -Wextra -pedantic -Werror -march=native)
-# add_compile_options(-Wall -Wextra -pedantic -Werror -march=native -fopenmp)
-
-add_compile_options(-march=native -Ofast -fopenmp)
-# add_compile_options(-march=native -Ofast)
-# add_compile_options(-fopenmp)
-
-## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
 find_package(Eigen3 REQUIRED)
-
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
@@ -28,7 +14,6 @@ find_package(catkin REQUIRED COMPONENTS
   visualization_msgs
   vehicle_msgs
 )
-
 find_package(OpenMP)
 
 
