@@ -24,8 +24,8 @@ vel_des = 5.0
 r_prox = 4.0
 
 class BehaviorPlanner:
-    def __init__(self, guideline_waypoints):
-        self._lat_ctrl = PurePursuit()
+    def __init__(self, lon_action_set, guideline_waypoints_set):
+        self._lat_ctrl = PurePursuit(K_dd=1.) #TODO: put K_dd in config file
         self._lon_ctrl = LongitudinalController()
                 
         self._planning_horizon = 50
@@ -34,13 +34,13 @@ class BehaviorPlanner:
         
         self._vehicle = Vehicle(dt=self._dt, wheel_base=self._wheel_base)
         
-        self._action_set = [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
-        self._guideline_waypoints = guideline_waypoints
-        
+        self._lon_action_set = lon_action_set
+        self._guideline_waypoints_set = guideline_waypoints_set
+                
         self._alpha_acc = 1.0
         self._alpha_steer = 1.0
     
-    def _forward_simulation(self, vehicle_state, action):
+    def _forward_simulation(self, vehicle_state, lon_action, guideline_id):
         acc_pre = 0.
         steer_pre = 0.
         self._vehicle.state = vehicle_state
@@ -48,9 +48,9 @@ class BehaviorPlanner:
         state_traj[0] = self._vehicle.state
         input_traj = np.zeros((self._planning_horizon, 2))
         for k in range(self._planning_horizon):
-            acc = self._lon_ctrl.compute_acceleration(self._vehicle.speed, action)
-            steer = self._lat_ctrl.compute_steering_angle(self._vehicle.state_rear, self._guideline_waypoints)
-            
+            acc = self._lon_ctrl.compute_acceleration(self._vehicle.speed, lon_action)
+            steer = self._lat_ctrl.compute_steering_angle(self._vehicle.state_rear, self._guideline_waypoints_set[guideline_id])
+                        
             acc = self._alpha_acc * acc + (1 - self._alpha_acc) * acc_pre
             steer = self._alpha_steer * steer + (1 - self._alpha_steer) * steer_pre
                         
@@ -88,31 +88,29 @@ class BehaviorPlanner:
         input_traj_all = [] 
         min_cost = float('inf')
         best_action_id = 0
+        num_lon_action = len(self._lon_action_set)
         
-        for action_id, action in enumerate(self._action_set):
-            state_traj, input_traj = self._forward_simulation(vehicle_state, action)
-
-            # plt.figure()
-            # for sv_state_traj in sv_state_trajs:
-            #     plt.plot(sv_state_traj[:, 0], sv_state_traj[:, 1], '-or')
-            # plt.plot(state_traj[:, 0], state_traj[:, 1], '-ob')
-            # plt.show()
-    
-            state_traj_all.append(state_traj)
-            input_traj_all.append(input_traj)
-            cost = 0.
-            for sv_state_traj in sv_state_trajs:
-                cost += self._evaluate_cost(state_traj, input_traj, sv_state_traj)
-            
-            print(f"action_id: {action_id}, cost: {cost}")
-            
-            if cost < min_cost and cost < threshold:
-                min_cost = cost
-                best_action_id = action_id
+        for guideline_id in range(len(self._guideline_waypoints_set)): 
+            for lon_action_id, lon_action in enumerate(self._lon_action_set):
+                state_traj, input_traj = self._forward_simulation(vehicle_state, lon_action, guideline_id)
                 
-        # best_action_id = 0
-
+                state_traj_all.append(state_traj)
+                input_traj_all.append(input_traj)
+                cost = 0.
+                for sv_state_traj in sv_state_trajs:
+                    cost += self._evaluate_cost(state_traj, input_traj, sv_state_traj)
+                
+                print(f"guideline_id: {guideline_id}, lon_action_id: {lon_action_id}, cost: {cost}")
+                
+                if cost < min_cost and cost < threshold:
+                    min_cost = cost
+                    best_action_id = guideline_id * num_lon_action + lon_action_id
+            
         return state_traj_all[best_action_id], input_traj_all[best_action_id], best_action_id
     
     def get_action(self, id):
-        return self._action_set[id]
+        guideline_id = id // len(self._lon_action_set)
+        lon_action_id = id % len(self._lon_action_set) 
+        lon_action = self._lon_action_set[lon_action_id]
+        
+        return lon_action, guideline_id
