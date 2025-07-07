@@ -1,44 +1,43 @@
+import numpy as np
+import math
+import rospy
 from utils.lat_ctrl import PurePursuit
 from utils.lon_ctrl import LongitudinalController
 from utils.vehicle import Vehicle
-from copy import deepcopy
-import numpy as np
-import math 
-import matplotlib.pyplot as plt
-
-
-# weight_vel = 0.5
-# weight_acc = 0.0
-# weight_steer = 0.0
-# weight_safety = 1000
-# threshold = 1000.0
-
-
-weight_vel = 0.5
-weight_acc = 120.0
-weight_steer = 0.0
-weight_safety = 1000
-threshold = 1200.0
-
-vel_des = 5.0
-r_prox = 4.0
 
 class BehaviorPlanner:
-    def __init__(self, lon_action_set, guideline_waypoints_set):
-        self._lat_ctrl = PurePursuit(K_dd=1.) #TODO: put K_dd in config file
+    def __init__(self, lon_action_set, guideline_waypoints_set, config=None):
+        # Load configuration parameters with defaults
+        if config is None:
+            rospy.logerr("Configuration for BehaviorPlanner is not provided!")
+        
+        # Cost function weights
+        self._weight_vel = config['weight_vel']
+        self._weight_acc = config['weight_acc']
+        self._weight_steer = config['weight_steer']
+        self._weight_safety = config['weight_safety']
+        
+        # Planning constraints and thresholds
+        self._threshold = config['threshold']
+        self._vel_des = config['vel_des']
+        self._r_prox = config['r_prox']
+        
+        # Planning horizon and dynamics
+        self._planning_horizon = config['planning_horizon']
+        self._dt = config['dt']
+        self._wheel_base = config['wheel_base']
+        
+        # Control smoothing parameters
+        self._alpha_acc = config['alpha_acc']
+        self._alpha_steer = config['alpha_steer']
+
+        self._lat_ctrl = PurePursuit(K_dd=config['K_dd'])
         self._lon_ctrl = LongitudinalController()
-                
-        self._planning_horizon = 50
-        self._dt = 0.1
-        self._wheel_base = 3.0
         
         self._vehicle = Vehicle(dt=self._dt, wheel_base=self._wheel_base)
         
         self._lon_action_set = lon_action_set
         self._guideline_waypoints_set = guideline_waypoints_set
-                
-        self._alpha_acc = 1.0
-        self._alpha_steer = 1.0
     
     def _forward_simulation(self, vehicle_state, lon_action, guideline_id):
         acc_pre = 0.
@@ -66,19 +65,19 @@ class BehaviorPlanner:
     def _evaluate_cost(self, state_traj, input_traj, sv_state_traj):
         cost = 0.
         for k in range(self._planning_horizon):
-            cost_progress = weight_vel * (state_traj[k, 3] - vel_des)**2
-            cost_effort = weight_acc * input_traj[k, 0]**2 + weight_steer * input_traj[k, 1]**2
+            cost_progress = self._weight_vel * (state_traj[k, 3] - self._vel_des)**2
+            cost_effort = self._weight_acc * input_traj[k, 0]**2 + self._weight_steer * input_traj[k, 1]**2
             dist = np.linalg.norm(state_traj[k, :2] - sv_state_traj[k, :2])
             cost_safety = 0.
-            if dist < r_prox:
-                cost_safety = weight_safety * math.exp(-dist**2 / (2 * r_prox**2))
+            if dist < self._r_prox:
+                cost_safety = self._weight_safety * math.exp(-dist**2 / (2 * self._r_prox**2))
             cost += cost_progress + cost_effort + cost_safety
         
-        cost_progress = weight_vel * (state_traj[-1, 3] - vel_des)**2
+        cost_progress = self._weight_vel * (state_traj[-1, 3] - self._vel_des)**2
         dist = np.linalg.norm(state_traj[-1, :2] - sv_state_traj[-1, :2])
         cost_safety = 0.
-        if dist < r_prox:
-            cost_safety = weight_safety * math.exp(-dist**2 / (2 * r_prox**2))
+        if dist < self._r_prox:
+            cost_safety = self._weight_safety * math.exp(-dist**2 / (2 * self._r_prox**2))
         cost += cost_progress + cost_safety
         
         return cost
@@ -102,7 +101,7 @@ class BehaviorPlanner:
                 
                 print(f"guideline_id: {guideline_id}, lon_action_id: {lon_action_id}, cost: {cost}")
                 
-                if cost < min_cost and cost < threshold:
+                if cost < min_cost and cost < self._threshold:
                     min_cost = cost
                     best_action_id = guideline_id * num_lon_action + lon_action_id
             

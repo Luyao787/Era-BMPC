@@ -23,7 +23,8 @@ class SimpleSimulationNode:
         multi_vehicle_states,
         sv_predicted_decision_set,
         ego_lon_decision_set,
-        config
+        config,
+        behavior_planner_config=None
     ):
         self._centerlines_vis_pub = rospy.Publisher("centerlines", MarkerArray, queue_size=1)
         self._vehicle_vis_pubs = rospy.Publisher("vehicles", MarkerArray, queue_size=10)
@@ -38,7 +39,7 @@ class SimpleSimulationNode:
         self._config = config
         
         self._vehicles = []
-        self._behavior_planner = BehaviorPlanner(ego_lon_decision_set, self._centerlines_waypoints)
+        self._behavior_planner = BehaviorPlanner(ego_lon_decision_set, self._centerlines_waypoints, behavior_planner_config)
 
     def _timer_callback(self, event):
         draw_centerlines(self._centerlines_waypoints, self._centerlines_vis_pub)
@@ -259,6 +260,20 @@ def load_example_config(name, config_dir):
     config['multi_vehicle_states'] = [np.array(state) for state in config['multi_vehicle_states']]
 
     return config
+
+
+def load_behavior_planner_config(config_dir):
+    config_path = os.path.join(config_dir, "behavior_planner.yaml")
+    
+    if not os.path.exists(config_path):
+        rospy.logwarn(f"Behavior planner config file not found: {config_path}, using default parameters")
+        return {}
+    
+    with open(config_path, 'r') as file:
+        config = yaml.safe_load(file)
+    
+    rospy.loginfo(f"Loaded behavior planner configuration from: {config_path}")
+    return config
     
     
 if __name__ == "__main__":
@@ -280,6 +295,9 @@ if __name__ == "__main__":
     if example_config is None:
         rospy.logerr("Failed to load example configuration!")
         exit(1)
+
+    # Load behavior planner configuration
+    behavior_planner_config = load_behavior_planner_config(config_dir)
     
     print(f"Loaded example: {example_config['example_name']}")
     
@@ -353,7 +371,8 @@ if __name__ == "__main__":
         multi_vehicle_states,
         sv_predicted_decision_set,
         ego_lon_decision_set,
-        sim_config
+        sim_config,
+        behavior_planner_config
     )
     sim_node.run(sv_decisions)    
     

@@ -1,0 +1,24 @@
+# Behavior Planner Configuration
+
+# Cost function weights
+weight_vel: 0.5          # Weight for velocity tracking cost
+weight_acc: 120.0        # Weight for acceleration effort cost  
+weight_steer: 1.0        # Weight for steering effort cost
+weight_safety: 1000      # Weight for safety/collision avoidance cost
+
+# Planning constraints and thresholds
+threshold: 1200.0       # Cost threshold for acceptable plans
+vel_des: 5.0            # Desired velocity (m/s)
+r_prox: 3.5             # Proximity radius for safety cost calculation (m)
+
+# Planning horizon and dynamics
+planning_horizon: 50    # Number of time steps to plan ahead
+dt: 0.1                 # Time step size (s)
+wheel_base: 3.0         # Vehicle wheelbase (m)
+
+# Control smoothing parameters
+alpha_acc: 1.0          # Smoothing factor for acceleration (0-1, 1=no smoothing)
+alpha_steer: 1.0        # Smoothing factor for steering (0-1, 1=no smoothing)
+
+# Lateral controller parameters
+K_dd: 1.0               # Pure pursuit lookahead gain
