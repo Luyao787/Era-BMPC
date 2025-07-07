@@ -7,8 +7,16 @@ Robust to Uncertain Vehicle Behaviors](https://ieeexplore.ieee.org/document/1088
 roslaunch cilqr_tree cilqr_tree_node.launch 
 ```
 
+Highway
+
 ```
-roslaunch simple_simulation intersection.launch 
+roslaunch simple_simulation simulation.launch scenario:=highway
+```
+
+Intersection
+
+```
+roslaunch simple_simulation simulation.launch scenario:=intersection
 ```
 
 ## TODO
